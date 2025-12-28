@@ -93,24 +93,31 @@ void updatePhysics(
     *x += *vx * deltaTime;
     *y += *vy * deltaTime;
 
+    //bounce
+    const float restitution = 0.99f;
+
     // collision wall
     if (*x < radius) {
         *x = radius;
-        *vx = 0.0f;
+        if (*vx < 0.0f)
+            *vx = -(*vx) * restitution;
     }
     if (*x > WIDTH - radius) {
         *x = WIDTH - radius;
-        *vx = 0.0f;
+        if (*vx > 0.0f)
+            *vx = -(*vx) * restitution;
     }
 
     // collision up/down
     if (*y < radius) {
         *y = radius;
-        *vy = 0.0f;
+        if (*vy < 0.0f)
+            *vy = -(*vy) * restitution;
     }
     if (*y > HEIGHT - radius) {
         *y = HEIGHT - radius;
-        *vy = 0.0f;
+        if (*vy > 0.0f)
+            *vy = -(*vy) * restitution;
     }
 }
 
