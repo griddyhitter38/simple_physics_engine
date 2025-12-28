@@ -1,9 +1,56 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_rect.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_stdinc.h>
 #include <math.h>
 #include <stdbool.h>
 
 #define HEIGHT 1000
 #define WIDTH  800
+
+typedef struct{
+    float x,y;
+    float vx,vy;
+    float ax,ay;
+    int half;
+    Uint8 R,G,B,A;
+}Square;
+
+void renderSquare(SDL_Renderer *renderer, const Square *s){
+    SDL_SetRenderDrawColor(renderer, s->R,s->G,s->B,s->A);
+
+    SDL_Rect rect;
+    rect.x = (int) (s->x - s->half);
+    rect.y = (int) (s->y - s->half);
+    rect.w = s->half * 2;
+    rect.h = s->half * 2;
+
+    SDL_RenderFillRect(renderer,&rect);
+}
+
+void updateSquare(Square *s, float dt) {
+    const float drag = 0.98f;
+    const float g = 2000.0f;
+
+    s->ax = 0.0f;
+    s->ay = g;
+
+    s->vx += s->ax * dt;
+    s->vy += s->ay * dt;
+
+    s->vx *= drag;
+    s->vy *= drag;
+
+    s->x += s->vx * dt;
+    s->y += s->vy * dt;
+
+    if (s->x < s->half) { s->x = s->half; s->vx = 0.0f; }
+    if (s->x > WIDTH - s->half) { s->x = WIDTH - s->half; s->vx = 0.0f; }
+
+    if (s->y < s->half) { s->y = s->half; s->vy = 0.0f; }
+    if (s->y > HEIGHT - s->half) { s->y = HEIGHT - s->half; s->vy = 0.0f; }
+}
+
 
 void drawFilledKirkle(SDL_Renderer *renderer, int cx, int cy, int radius) {
     for (int dy = -radius; dy <= radius; dy++) {
@@ -95,6 +142,7 @@ void updatePhysics(
 
     //bounce
     const float restitution = 0.99f;
+    const float stopVy = 80.0f;
 
     // collision wall
     if (*x < radius) {
@@ -116,18 +164,23 @@ void updatePhysics(
     }
     if (*y > HEIGHT - radius) {
         *y = HEIGHT - radius;
-        if (*vy > 0.0f)
+        if (*vy > 0.0f) {
             *vy = -(*vy) * restitution;
+            if (fabsf(*vy) < stopVy) *vy = 0.0f;
+        }
     }
+
 }
 
 // render
-void render(SDL_Renderer *renderer, float x, float y, int radius) {
+void renderr(SDL_Renderer *renderer, float x, float y, int radius, const Square *sq) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     drawFilledKirkle(renderer, (int)x, (int)y, radius);
+
+    renderSquare(renderer, sq);
 
     SDL_RenderPresent(renderer);
 }
@@ -146,6 +199,16 @@ int main(void) {
     SDL_Renderer *renderer = NULL;
 
     if (!init(&window, &renderer)) return 1;
+    //sq apperance
+    Square sq;
+    sq.x = 300.0f;
+    sq.y = 300.0f;
+    sq.vx = 0.0f;
+    sq.vy = 0.0f;
+    sq.ax = 0.0f;
+    sq.ay = 0.0f;
+    sq.half = 50;
+    sq.R = 255; sq.G = 255; sq.B = 255; sq.A = 255;
 
     // kirle apperance
     int radius = 70;
@@ -167,7 +230,8 @@ int main(void) {
         handleEvents(&running);
         float deltaTime = getDeltaTime(&lastTime);
         updatePhysics(&x, &y, &vx, &vy, &ax, &ay, radius, deltaTime);
-        render(renderer, x, y, radius);
+        updateSquare(&sq, deltaTime);
+        renderr(renderer, x, y, radius,&sq);
         SDL_Delay(1);
     }
 
