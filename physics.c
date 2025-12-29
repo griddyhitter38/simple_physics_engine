@@ -1,4 +1,4 @@
-#include "physics.h"
+#include "headers/physics.h"
 #include <math.h>
 
 static float clampf(float v, float lo, float hi)

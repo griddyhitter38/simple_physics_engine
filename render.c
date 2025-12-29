@@ -1,4 +1,4 @@
-#include "render.h"
+#include "headers/render.h"
 #include <math.h>
 
 void renderSquare(SDL_Renderer *renderer, const Square *s)

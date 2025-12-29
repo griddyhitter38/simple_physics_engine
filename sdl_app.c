@@ -1,4 +1,4 @@
-#include "sdl_app.h"
+#include "headers/sdl_app.h"
 
 bool init(SDL_Window **window, SDL_Renderer **renderer)
 {
